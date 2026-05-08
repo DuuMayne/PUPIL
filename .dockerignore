@@ -1,7 +1,13 @@
 .git
+.gitignore
+.github
 .next
 node_modules
 data
 *.db
 *.db-shm
 *.db-wal
+.env*
+.DS_Store
+README.md
+*.tsbuildinfo
