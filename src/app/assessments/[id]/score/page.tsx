@@ -233,6 +233,7 @@ export default function AssessmentScorePage() {
                               value={current?.score ?? null}
                               onChange={(score) => handleScoreChange(sub.id, score)}
                               disabled={readOnly}
+                              controlId={sub.id}
                             />
                           </div>
                           {(current?.score !== null && current?.score !== undefined || current?.rationale) && (
