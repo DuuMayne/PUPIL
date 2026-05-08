@@ -130,7 +130,7 @@ export default function GapPage() {
         </div>
         {!hasTargets && (
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-            No targets set. Set targets in the scoring view.
+            No targets set. Define them on the Targets page.
           </p>
         )}
       </div>

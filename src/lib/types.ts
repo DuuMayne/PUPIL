@@ -67,11 +67,19 @@ export interface Assessment {
   updated_at: string;
 }
 
+export type MaturityScore = number; // 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5
+
+export const MATURITY_SCORE_STEPS: MaturityScore[] = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+
+export function isFullLevel(score: number): score is MaturityLevel {
+  return score === 1 || score === 2 || score === 3 || score === 4 || score === 5;
+}
+
 export interface AssessmentScore {
   id: number;
   assessment_id: string;
   control_id: string;
-  score: MaturityLevel | null;
+  score: number | null;
   rationale: string | null;
   created_at: string;
   updated_at: string;
@@ -81,7 +89,7 @@ export interface Target {
   id: number;
   framework_id: number;
   control_id: string;
-  target_score: MaturityLevel;
+  target_score: number;
   notes: string | null;
   updated_at: string;
 }

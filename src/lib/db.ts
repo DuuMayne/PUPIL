@@ -53,7 +53,7 @@ export function getDb(): Database.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       assessment_id TEXT NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
       control_id TEXT NOT NULL REFERENCES controls(id),
-      score INTEGER CHECK(score BETWEEN 1 AND 5),
+      score REAL CHECK(score BETWEEN 1 AND 5),
       rationale TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
@@ -64,7 +64,7 @@ export function getDb(): Database.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       framework_id INTEGER NOT NULL REFERENCES frameworks(id),
       control_id TEXT NOT NULL REFERENCES controls(id),
-      target_score INTEGER NOT NULL CHECK(target_score BETWEEN 1 AND 5),
+      target_score REAL NOT NULL CHECK(target_score BETWEEN 1 AND 5),
       notes TEXT,
       updated_at TEXT DEFAULT (datetime('now')),
       UNIQUE(framework_id, control_id)

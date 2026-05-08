@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import MaturitySelector from '@/components/MaturitySelector';
 import MaturityBadge from '@/components/MaturityBadge';
 import { Assessment, Control, AssessmentScore, MaturityLevel } from '@/lib/types';
@@ -12,7 +13,7 @@ interface FunctionGroup {
 }
 
 interface ScoreMap {
-  [controlId: string]: { score: MaturityLevel | null; rationale: string };
+  [controlId: string]: { score: number | null; rationale: string };
 }
 
 export default function AssessmentScorePage() {
@@ -58,7 +59,7 @@ export default function AssessmentScorePage() {
       const scoreMap: ScoreMap = {};
       for (const s of asmData.scores ?? []) {
         scoreMap[s.control_id] = {
-          score: s.score as MaturityLevel | null,
+          score: s.score,
           rationale: s.rationale ?? '',
         };
       }
@@ -68,7 +69,7 @@ export default function AssessmentScorePage() {
     load();
   }, [id]);
 
-  const handleScoreChange = useCallback((controlId: string, score: MaturityLevel | null) => {
+  const handleScoreChange = useCallback((controlId: string, score: number | null) => {
     setScores((prev) => ({
       ...prev,
       [controlId]: { score, rationale: prev[controlId]?.rationale ?? '' },
@@ -110,6 +111,17 @@ export default function AssessmentScorePage() {
     });
     setAssessment((prev) => prev ? { ...prev, status: 'published' } : prev);
     setPublishing(false);
+  }
+
+  async function unlock() {
+    if (!assessment) return;
+    if (!confirm('Re-open this published assessment for editing? It will return to draft status.')) return;
+    await fetch(`/api/assessments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...assessment, status: 'draft' }),
+    });
+    setAssessment((prev) => prev ? { ...prev, status: 'draft' } : prev);
   }
 
   const readOnly = assessment?.status === 'published';
@@ -154,24 +166,39 @@ export default function AssessmentScorePage() {
             {' · '}{scoredCount}/{totalSubs} subcategories scored
           </p>
         </div>
-        {!readOnly && (
-          <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0">
+          <Link
+            href={`/assessments/${id}/report`}
+            className="text-sm px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition-colors"
+          >
+            Report
+          </Link>
+          {readOnly ? (
             <button
-              onClick={save}
-              disabled={saving || !dirty}
-              className="text-sm px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              onClick={unlock}
+              className="text-sm px-3 py-1.5 border border-amber-300 bg-amber-50 text-amber-800 rounded hover:bg-amber-100 transition-colors"
             >
-              {saving ? 'Saving…' : 'Save Draft'}
+              Edit (unpublish)
             </button>
-            <button
-              onClick={publish}
-              disabled={publishing}
-              className="text-sm px-3 py-1.5 bg-slate-900 text-white rounded hover:bg-slate-700 disabled:opacity-40 transition-colors"
-            >
-              {publishing ? 'Publishing…' : 'Publish'}
-            </button>
-          </div>
-        )}
+          ) : (
+            <>
+              <button
+                onClick={save}
+                disabled={saving || !dirty}
+                className="text-sm px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              >
+                {saving ? 'Saving…' : 'Save Draft'}
+              </button>
+              <button
+                onClick={publish}
+                disabled={publishing}
+                className="text-sm px-3 py-1.5 bg-slate-900 text-white rounded hover:bg-slate-700 disabled:opacity-40 transition-colors"
+              >
+                {publishing ? 'Publishing…' : 'Publish'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-6">
