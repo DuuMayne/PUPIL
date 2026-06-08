@@ -1,201 +1,249 @@
-# PUPIL
+# PUPIL — Program Uplift & Posture Improvement Ledger
 
-**Program Uplift & Posture Improvement Ledger** — an information security maturity measurement and tracking application.
+Track and measure your cybersecurity program's maturity over time. PUPIL gives you a simple web interface to score your organization against the NIST Cybersecurity Framework 2.0 — all 106 subcategories — and see exactly where you are, where you want to be, and how you're trending.
 
-PUPIL is a lightweight, self-hosted web app for running, tracking, and reporting on cybersecurity program maturity assessments. It ships with the **NIST CSF 2.0** framework (6 Functions, 22 Categories, 106 Subcategories) and uses the **CMMI 1–5** maturity scale to score each control.
+No spreadsheets. No consultants required. Just open a browser, score your controls, and get a clear picture of your security posture.
 
----
-
-## Why this exists
-
-Most maturity tracking lives in a security analyst's head, a stale spreadsheet, or a $50k GRC tool that nobody enjoys using. PUPIL aims for the middle ground:
-
-- **Measure** current maturity at the subcategory level with control-specific guidance for each CMMI level.
-- **Plan** by setting target maturity levels for each control.
-- **Visualise** the gap between current and target state.
-- **Track** improvement across multiple assessments over time.
-- **Share** the results — printable reports, CSV export, and direct shareable URLs.
-
-The data model is framework-agnostic. NIST CSF 2.0 ships in the seed; SOC 2 / ISO 27001 / others can be added by inserting their taxonomy into the `controls` table.
+**What it does:**
+- Score your program across 6 security functions (Govern, Identify, Protect, Detect, Respond, Recover) on a 1–5 maturity scale
+- Set target scores and visualize the gap between current and desired state
+- Track improvement over multiple assessments to show progress to leadership
+- Generate printable reports and CSV exports for board presentations or audits
+- Share assessment URLs with your team for collaborative scoring
+- Keep a full audit log of every score change — immutable history
 
 ---
 
-## Features
+## Table of Contents
 
-- **Assessments** — create draft assessments, score each subcategory (1–5 plus 0.5 half-steps), capture a rationale per control, then publish. Published assessments can be unlocked for editing or deleted.
-- **CMMI tooltips** — every full-level button has a rich tooltip showing the CMMI label, the generic level description, and a control-specific descriptor describing what systems / processes / procedures are expected at that level for that subcategory (530 descriptors total: 106 controls × 5 levels).
-- **Targets** — set a target maturity per subcategory; per-function quick-set buttons make filling in baseline targets fast.
-- **Gap Analysis** — function / category / subcategory bars showing current vs. target vs. delta.
-- **Trends** — line chart of average maturity per CSF function across all published assessments.
-- **Reports** — printable per-assessment report at `/assessments/<id>/report`, with executive summary, function-level table, full detail, Copy-Link button, Print/Save-PDF, and CSV export.
-- **Audit log** — every create / update / delete is recorded in an `audit_log` table inside the same SQLite transaction as the change. Structured JSON logs are also emitted to stdout for CloudWatch / Loki / etc.
-- **Single binary feel** — Next.js standalone output + SQLite. One container, one volume.
-
----
-
-## Architecture at a glance
-
-| Layer | Tech |
-| --- | --- |
-| UI | Next.js 16 App Router (React 19), Tailwind CSS 4 |
-| Charts | Recharts |
-| API | Next.js Route Handlers |
-| Storage | SQLite via `better-sqlite3` (WAL mode, foreign keys on) |
-| Logging | Structured JSON to stdout/stderr |
-| Container | Multi-stage Node 20 Alpine, non-root, standalone output |
-
-The schema lives in [`src/lib/db.ts`](src/lib/db.ts). The NIST CSF 2.0 seed is in [`src/lib/seed.ts`](src/lib/seed.ts). Control-level CMMI descriptors are in [`src/lib/descriptors.ts`](src/lib/descriptors.ts).
+1. [What you need before starting](#1-what-you-need-before-starting)
+2. [Setup: Docker (recommended)](#2-setup-docker-recommended)
+3. [Setup: Local development](#3-setup-local-development)
+4. [Running your first assessment](#4-running-your-first-assessment)
+5. [Understanding maturity scores](#5-understanding-maturity-scores)
+6. [Exporting and sharing results](#6-exporting-and-sharing-results)
+7. [Troubleshooting](#7-troubleshooting)
+8. [For developers](#8-for-developers)
 
 ---
 
-## Quick start (Docker)
+## 1. What you need before starting
 
-The fastest way to try it.
+**For Docker setup (recommended):**
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 
+**For local development:**
+- Node.js 18 or later — check with `node --version`
+- npm (comes with Node.js)
+
+No API keys, no external accounts, no configuration files. PUPIL is completely self-contained.
+
+---
+
+## 2. Setup: Docker (recommended)
+
+Docker packages everything into a container so you don't need to install Node.js or manage any dependencies.
+
+### Step 1 — Install Docker Desktop
+
+Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/). Once installed, open it and confirm the whale icon appears in your menu bar (macOS) or system tray (Windows).
+
+### Step 2 — Clone or download PUPIL
+
+If you have Git:
 ```bash
 git clone https://github.com/DuuMayne/PUPIL.git
 cd PUPIL
+```
+
+Or download the ZIP from GitHub and unzip it, then open a terminal in that folder.
+
+### Step 3 — Start PUPIL
+
+```bash
 docker compose up -d --build
 ```
 
-Then open <http://localhost:3001>.
+- **`--build`** — builds the image on first run (takes 2–3 minutes)
+- **`-d`** — runs in the background
 
-The DB is persisted in the `pupil-data` named volume mounted at `/app/data` inside the container. Drop the volume to reset:
+### Step 4 — Open PUPIL
 
+Go to **[http://localhost:3001](http://localhost:3001)** in any browser.
+
+That's it. Your assessment data is stored in a Docker volume and persists between restarts.
+
+**To stop PUPIL:**
 ```bash
-docker compose down -v
+docker compose down
 ```
 
-> **Note** — the compose file maps to host port `3001` (port `3000` is reserved for a sibling project on the author's setup). If you want it on `3000`, edit the `ports:` line in `docker-compose.yml`.
-
-### Running with `docker run` directly
-
+**To start it again later (fast, no rebuild needed):**
 ```bash
-docker build -t pupil .
-docker run -d \
-  --name pupil \
-  -p 3000:3000 \
-  -v pupil-data:/app/data \
-  -e DB_PATH=/app/data/pupil.db \
-  pupil
+docker compose up -d
+```
+
+**To update to the latest version:**
+```bash
+git pull
+docker compose up -d --build
 ```
 
 ---
 
-## Local development
+## 3. Setup: Local development
 
-Requires Node.js 20+ and npm.
+Use this if you want to modify the code or run PUPIL without Docker.
+
+### Step 1 — Install Node.js
+
+Download the LTS version from [nodejs.org](https://nodejs.org). Run `node --version` after installation to confirm it worked.
+
+### Step 2 — Install dependencies
 
 ```bash
+cd PUPIL
 npm install
+```
+
+### Step 3 — Start the development server
+
+```bash
 npm run dev
 ```
 
-Open <http://localhost:3000>. The dev server hot-reloads on save. The SQLite DB is created at `./data/pupil.db` on first request and seeded with the NIST CSF 2.0 taxonomy.
+Open **[http://localhost:3000](http://localhost:3000)**.
 
-### Useful commands
+The development server auto-reloads when you make code changes.
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Run Next.js dev server (Turbopack) |
-| `npm run build` | Production build (standalone output) |
-| `npm run start` | Run the production build |
-| `npm run lint` | ESLint |
-
----
-
-## Configuration
-
-PUPIL is configured entirely through environment variables. There are no required secrets out of the box.
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DB_PATH` | `./data/pupil.db` (dev) / `/app/data/pupil.db` (container) | Absolute path to the SQLite file. Point at a mounted volume for persistence. |
-| `PORT` | `3000` | Port the Next.js server binds to. |
-| `HOSTNAME` | `0.0.0.0` | Bind host. |
-| `NODE_ENV` | `production` (in container) | Standard. |
-| `NEXT_TELEMETRY_DISABLED` | `1` (in container) | Opts out of Next telemetry. |
-
-For deployments where the DB lives on shared storage (EFS, NFS), make sure `DB_PATH` points at that mount.
-
----
-
-## Using PUPIL
-
-1. **Create an assessment.** From `/assessments`, click *New Assessment*. Give it a title, optional date, optional assessor, and optional description.
-2. **Score it.** You land on the scoring page, grouped by CSF Function in the left sidebar. For each subcategory, hover any of the 1–5 buttons to see what that level looks like for that specific control. Click to set the score; click again to clear. Use the smaller half-step buttons (1.5 / 2.5 / 3.5 / 4.5) when you're between levels. Add an optional rationale per control.
-3. **Save / Publish.** *Save Draft* persists progress without changing status. *Publish* marks the assessment as the source-of-truth current state. Published assessments are read-only by default — use *Edit (unpublish)* if you need to amend.
-4. **Set targets.** From `/targets`, walk each function and define the target maturity for each subcategory. Use the per-function "Quick set all to N" row to fill in a baseline you can then refine.
-5. **See the gap.** `/gap` shows current (latest published assessment) vs. target at every level of the hierarchy.
-6. **Track trends.** `/trends` plots per-function average maturity across every published assessment over time.
-7. **Share or export.** Each assessment has a printable report at `/assessments/<id>/report` with three actions:
-   - **Copy Link** — direct URL for sharing internally.
-   - **Export CSV** — full subcategory-level dump (`/api/assessments/<id>/export?format=csv`).
-   - **Print / Save PDF** — uses the browser's print dialog. The action bar is hidden in print.
-
-   JSON export is also available at `/api/assessments/<id>/export?format=json`.
-
----
-
-## API reference (high level)
-
-All endpoints accept and return JSON unless noted.
-
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| `/api/assessments` | `GET`, `POST` | List assessments; create a new one. `?include_counts=1` joins scored counts. |
-| `/api/assessments/[id]` | `GET`, `PUT`, `DELETE` | Read, update (incl. status), delete an assessment. |
-| `/api/assessments/[id]/scores` | `GET`, `PUT`, `POST` | Read all scores; upsert one (`PUT`) or many (`POST`). |
-| `/api/assessments/[id]/export` | `GET` | `?format=csv` (default) or `?format=json`. |
-| `/api/controls` | `GET` | List controls; filter by `?level=`, `?parent_id=`, `?framework_id=`. |
-| `/api/targets` | `GET`, `PUT`, `POST` | Read targets; upsert one or many. |
-| `/api/notes` | `GET`, `POST` | Free-form notes attached to any entity. |
-| `/api/inputs` | `GET`, `POST` | Stakeholder input/evidence per control. |
-
----
-
-## Data model
-
-```
-frameworks ─┬─ controls (function | category | subcategory, self-referential parent_id)
-            │
-            ├─ assessments ─── assessment_scores (one row per scored control)
-            │
-            └─ targets (one target_score per control)
-
-stakeholder_inputs   notes   audit_log     (cross-cutting)
+**To build and run a production version locally:**
+```bash
+npm run build
+npm start
 ```
 
-- `score` and `target_score` are stored as `REAL` so half-steps round-trip cleanly.
-- `assessment_scores` cascades on `assessments` delete.
-- Every API write inserts an `audit_log` row inside the same transaction as the change, so you can never end up with an unaudited mutation.
+---
+
+## 4. Running your first assessment
+
+When you open PUPIL for the first time, you'll land on the dashboard with an empty assessment.
+
+### Creating a new assessment
+
+1. Click **New Assessment** in the top right
+2. Give it a name (e.g. "Q2 2026 Baseline") and a date
+3. Click **Create**
+
+### Scoring subcategories
+
+PUPIL loads all 106 NIST CSF 2.0 subcategories organized by Function and Category. For each one:
+
+1. Read the subcategory description
+2. Click the maturity tooltip (the **?** icon) to see what each score level means for that specific control
+3. Select a score from **1** (ad-hoc, no formal process) to **5** (optimized, continuously improving)
+4. Optionally add a note explaining your score
+5. Move to the next subcategory
+
+You don't have to score everything in one session — PUPIL saves automatically as you go.
+
+### Setting targets
+
+After scoring your current state, click **Set Targets** to define where you want to be. This creates the gap analysis view showing which categories need the most work.
 
 ---
 
-## Production notes
+## 5. Understanding maturity scores
 
-- **Persistence.** The container expects a writable volume at whatever path `DB_PATH` points to. SQLite WAL mode means three files (`*.db`, `*.db-wal`, `*.db-shm`) — keep them on the same volume.
-- **Backups.** The single SQLite file makes backup trivial: stop traffic, `cp` the file (or use `sqlite3 .backup`), restart.
-- **Logging.** All API mutations emit a single-line JSON log to stdout/stderr, which CloudWatch, Loki, Vector, or Fluent Bit will pick up natively.
-- **Authentication.** PUPIL has no built-in auth. Run it behind your reverse proxy / SSO (Cloudflare Access, oauth2-proxy, ALB + Cognito, Tailscale, etc.). It is designed for trusted internal networks.
-- **Concurrency.** SQLite is fine for the kinds of write rates a maturity-tracking app generates (one assessor at a time, batches of upserts). If you ever outgrow it, the schema ports cleanly to Postgres.
+PUPIL uses the CMMI (Capability Maturity Model Integration) 1–5 scale:
 
-A sample ECS task definition with EFS persistence is included at [`deploy/ecs-task-definition.example.json`](deploy/ecs-task-definition.example.json) (this lineage is from a sister project, but the volume / env-var pattern applies).
+| Score | Level | What it means |
+|---|---|---|
+| **1** | Initial | Ad-hoc or nonexistent. Outcomes are unpredictable. |
+| **2** | Managed | Basic processes exist but aren't consistently followed. |
+| **3** | Defined | Documented, standardized processes followed across the organization. |
+| **4** | Quantitatively Managed | Processes measured and controlled using metrics. |
+| **5** | Optimizing | Continuous improvement based on performance data. |
+
+Most organizations doing a first assessment land between 1 and 3. A score of 3 across the board is a solid, defensible security posture for most mid-size companies.
+
+**The hover tooltips (the ? icons) are your best friend** — PUPIL includes 530 control-specific descriptors that tell you exactly what a 2 versus a 3 looks like for *that specific subcategory*, not just a generic definition.
 
 ---
 
-## Roadmap
+## 6. Exporting and sharing results
 
-- Additional frameworks (SOC 2, ISO 27001) seeded alongside CSF 2.0.
-- Per-control evidence attachments (file uploads).
-- Diff view between two assessments.
-- Weighted targets and risk-based prioritisation.
-- Optional auth provider integrations.
+**Print or save as PDF:**
+Click **Print Report** from any assessment view. This generates a clean, formatted report suitable for board presentations or audit documentation.
 
-PRs welcome.
+**Export to CSV:**
+Click **Export CSV** to download all scores as a spreadsheet. Useful for importing into other tools or creating your own charts.
+
+**Shareable URL:**
+Each assessment has a unique URL you can share with teammates so they can view or contribute scores.
+
+---
+
+## 7. Troubleshooting
+
+### "This site can't be reached" at localhost:3001
+
+The container isn't running. Check:
+```bash
+docker compose ps
+```
+If `pupil` isn't listed as `Up`, start it:
+```bash
+docker compose up -d
+```
+
+### Data disappeared after updating
+
+Your data is stored in a Docker volume called `pupil-data`. Volumes persist through restarts and rebuilds — data only disappears if you explicitly run `docker compose down -v` (the `-v` flag removes volumes). For regular updates, just use `docker compose up -d --build`.
+
+### "npm: command not found" for local setup
+
+Node.js isn't installed. Download it from [nodejs.org](https://nodejs.org) and try again.
+
+### Port 3001 is already in use
+
+Another application is using port 3001. Either stop the other application or change PUPIL's port by editing `docker-compose.yml`: change `"3001:3000"` to `"3002:3000"` (or any free port) and restart.
+
+### Scores aren't saving
+
+PUPIL saves automatically — you should see a brief "Saved" indicator after each change. If you're not seeing that, check that the container is running and try refreshing the page.
+
+---
+
+## 8. For developers
+
+### Tech stack
+- **Next.js 16** (App Router, React 19)
+- **SQLite** via better-sqlite3 (WAL mode for concurrent reads)
+- **Tailwind CSS 4**
+- **Recharts** for score visualizations
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_PATH` | `./data/pupil.db` | SQLite database file path |
+| `PORT` | `3000` | HTTP server port |
+
+### Project structure
+```
+app/          — Next.js App Router pages and API routes
+components/   — React components
+lib/          — Database access and scoring logic
+data/         — SQLite database (created on first run)
+```
+
+### Running linting
+```bash
+npm run lint
+```
 
 ---
 
 ## License
 
-MIT — see `LICENSE` (add one before shipping public if not already present).
+Apache 2.0 with Commons Clause. Free to use and modify for internal purposes; selling as a product requires permission. See [LICENSE](LICENSE) for full terms.
