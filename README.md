@@ -179,7 +179,7 @@ Click **Print Report** from any assessment view. This generates a clean, formatt
 Click **Export CSV** to download all scores as a spreadsheet. Useful for importing into other tools or creating your own charts.
 
 **Shareable URL:**
-Each assessment has a unique URL you can share with teammates so they can view or contribute scores.
+Each assessment has a unique URL you can share with anyone who has access to the same running instance.
 
 ---
 
@@ -231,10 +231,10 @@ PUPIL saves automatically — you should see a brief "Saved" indicator after eac
 
 ### Project structure
 ```
-app/          — Next.js App Router pages and API routes
-components/   — React components
-lib/          — Database access and scoring logic
-data/         — SQLite database (created on first run)
+src/app/          — Next.js App Router pages and API routes
+src/components/   — React components
+src/lib/          — Database access and scoring logic
+data/             — SQLite database (created on first run)
 ```
 
 ### Running linting
