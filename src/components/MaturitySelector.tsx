@@ -132,5 +132,3 @@ export default function MaturitySelector({ value, onChange, disabled, controlId 
     </div>
   );
 }
-
-export { isFullLevel };

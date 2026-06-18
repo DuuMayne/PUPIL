@@ -2,6 +2,8 @@ import { getDb } from '@/lib/db';
 import { seedDatabase } from '@/lib/seed';
 import TrendChart from '@/components/TrendChart';
 
+export const dynamic = 'force-dynamic';
+
 interface DataPoint {
   label: string;
   assessmentId: string;

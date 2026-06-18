@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { getDb } from '@/lib/db';
 import { seedDatabase } from '@/lib/seed';
 import MaturityBadge from '@/components/MaturityBadge';
-import { MaturityLevel, MATURITY_BAR_COLORS } from '@/lib/types';
+import { MaturityLevel } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 interface FunctionSummary {
   code: string;

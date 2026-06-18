@@ -3,6 +3,8 @@ import { seedDatabase } from '@/lib/seed';
 import { MaturityLevel, MATURITY_LABELS } from '@/lib/types';
 import MaturityBadge from '@/components/MaturityBadge';
 
+export const dynamic = 'force-dynamic';
+
 interface GapRow {
   code: string;
   title: string;

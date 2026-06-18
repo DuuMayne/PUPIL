@@ -246,4 +246,4 @@ npm run lint
 
 ## License
 
-Apache 2.0 with Commons Clause. Free to use and modify for internal purposes; selling as a product requires permission. See [LICENSE](LICENSE) for full terms.
+Apache 2.0 with Commons Clause — see [LICENSE](LICENSE). You may use, modify, and self-host PUPIL freely; the Commons Clause restricts selling it (or a hosted service whose value derives substantially from it) without a separate agreement.
