@@ -18,38 +18,43 @@ export default function TargetsPage() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  const load = useCallback(async () => {
-    const [ctlRes, tgtRes] = await Promise.all([
-      fetch('/api/controls'),
-      fetch('/api/targets'),
-    ]);
-    const controls = await ctlRes.json() as Control[];
-    const tgts = await tgtRes.json() as Target[];
-
-    const fns = controls.filter((c) => c.level === 'function');
-    const cats = controls.filter((c) => c.level === 'category');
-    const subs = controls.filter((c) => c.level === 'subcategory');
-
-    const grouped: FunctionGroup[] = fns.map((fn) => ({
-      fn,
-      categories: cats
-        .filter((c) => c.parent_id === fn.id)
-        .map((cat) => ({
-          cat,
-          subcategories: subs.filter((s) => s.parent_id === cat.id),
-        })),
-    }));
-    setGroups(grouped);
-
-    const tmap: Record<string, number | null> = {};
-    for (const t of tgts) tmap[t.control_id] = t.target_score;
-    setTargets(tmap);
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    let ignore = false;
+    (async () => {
+      const [ctlRes, tgtRes] = await Promise.all([
+        fetch('/api/controls'),
+        fetch('/api/targets'),
+      ]);
+      const controls = await ctlRes.json() as Control[];
+      const tgts = await tgtRes.json() as Target[];
+
+      const fns = controls.filter((c) => c.level === 'function');
+      const cats = controls.filter((c) => c.level === 'category');
+      const subs = controls.filter((c) => c.level === 'subcategory');
+
+      const grouped: FunctionGroup[] = fns.map((fn) => ({
+        fn,
+        categories: cats
+          .filter((c) => c.parent_id === fn.id)
+          .map((cat) => ({
+            cat,
+            subcategories: subs.filter((s) => s.parent_id === cat.id),
+          })),
+      }));
+
+      const tmap: Record<string, number | null> = {};
+      for (const t of tgts) tmap[t.control_id] = t.target_score;
+
+      if (!ignore) {
+        setGroups(grouped);
+        setTargets(tmap);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleChange = useCallback((controlId: string, score: number | null) => {
     setTargets((prev) => ({ ...prev, [controlId]: score }));

@@ -25,7 +25,18 @@ export default function AssessmentsPage() {
   }
 
   useEffect(() => {
-    load();
+    let ignore = false;
+    (async () => {
+      const res = await fetch('/api/assessments?include_counts=1', { cache: 'no-store' });
+      const data = await res.json();
+      if (!ignore) {
+        setAssessments(data);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function unlock(a: AssessmentRow) {

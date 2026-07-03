@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MaturityLevel, MATURITY_LABELS, MATURITY_DESCRIPTIONS, isFullLevel } from '@/lib/types';
+import { MaturityLevel, MATURITY_LABELS, MATURITY_DESCRIPTIONS } from '@/lib/types';
 import { CONTROL_DESCRIPTORS } from '@/lib/descriptors';
 
 interface Props {
