@@ -1,15 +1,16 @@
 # PUPIL — Program Uplift & Posture Improvement Ledger
 
-Track and measure your cybersecurity program's maturity over time. PUPIL gives you a simple web interface to score your organization against the NIST Cybersecurity Framework 2.0 — all 106 subcategories — and see exactly where you are, where you want to be, and how you're trending.
+Track and measure your cybersecurity program's maturity over time. PUPIL gives you a simple web interface to score your organization against the NIST Cybersecurity Framework 2.0 — all 106 subcategories — and the CIS Critical Security Controls v8.1 — all 153 safeguards — and see exactly where you are, where you want to be, and how you're trending, in either framework or both at once.
 
 No spreadsheets. No consultants required. Just open a browser, score your controls, and get a clear picture of your security posture.
 
 **What it does:**
-- Score your program across 6 security functions (Govern, Identify, Protect, Detect, Respond, Recover) on a 1–5 maturity scale
+- Score your program against NIST CSF 2.0 (106 subcategories across 6 functions) or CIS Controls v8.1 (153 safeguards across 18 controls) — same tool, either framework
+- For CIS, pick a target Implementation Group (IG1, IG2, or IG3) and have target scores populate automatically across every in-scope safeguard — fine-tune any individual one afterward
+- Get an auto-generated Strategic Roadmap: a radar chart of current vs. target maturity plus a prioritized, plain-English action list, written directly from your scores — no manual write-up required
+- See where NIST and CIS overlap using CIS's own official crosswalk to NIST CSF 2.0 — related requirements are linked automatically wherever one exists
 - Set target scores and visualize the gap between current and desired state
-- Track improvement over multiple assessments to show progress to leadership
-- Generate printable reports and CSV exports for board presentations or audits
-- Share assessment URLs with your team for collaborative scoring
+- Track improvement over multiple assessments, and generate printable reports or CSV exports for board presentations or audits
 - Keep a full audit log of every score change — immutable history
 
 ---
@@ -20,10 +21,12 @@ No spreadsheets. No consultants required. Just open a browser, score your contro
 2. [Setup: Docker (recommended)](#2-setup-docker-recommended)
 3. [Setup: Local development](#3-setup-local-development)
 4. [Running your first assessment](#4-running-your-first-assessment)
-5. [Understanding maturity scores](#5-understanding-maturity-scores)
-6. [Exporting and sharing results](#6-exporting-and-sharing-results)
-7. [Troubleshooting](#7-troubleshooting)
-8. [For developers](#8-for-developers)
+5. [Setting targets](#5-setting-targets)
+6. [Understanding maturity scores](#6-understanding-maturity-scores)
+7. [The Strategic Roadmap](#7-the-strategic-roadmap)
+8. [Exporting and sharing results](#8-exporting-and-sharing-results)
+9. [Troubleshooting](#9-troubleshooting)
+10. [For developers](#10-for-developers)
 
 ---
 
@@ -131,30 +134,45 @@ When you open PUPIL for the first time, you'll land on the dashboard with an emp
 ### Creating a new assessment
 
 1. Click **New Assessment** in the top right
-2. Give it a name (e.g. "Q2 2026 Baseline") and a date
-3. Click **Create**
+2. Choose a framework — **NIST CSF 2.0** or **CIS Controls v8.1**
+3. Give it a name (e.g. "Q2 2026 Baseline") and a date
+4. Click **Create & Start Scoring**
 
-### Scoring subcategories
+> **Which framework should I use?** NIST CSF 2.0 is outcomes-based (six functions, 106 subcategories) and works well for board-level risk conversations and maturity storytelling over time. CIS Controls v8.1 is a prioritized, checklist-style set of 153 technical safeguards, and works well for "what do we actually need to implement" conversations — especially if you're targeting a specific Implementation Group (IG1/2/3) for a cyber insurance requirement or client questionnaire. You don't have to pick one: PUPIL's [Strategic Roadmap](#7-the-strategic-roadmap) shows a combined view across both.
 
-PUPIL loads all 106 NIST CSF 2.0 subcategories organized by Function and Category. For each one:
+### Scoring your controls
 
-1. Read the subcategory description
-2. Click the maturity tooltip (the **?** icon) to see what each score level means for that specific control
+PUPIL loads every subcategory (NIST) or safeguard (CIS) for the framework you chose, organized by Function and Category (NIST) or by Control (CIS). For each one:
+
+1. Read the description
+2. Click the maturity tooltip (the **?** icon) to see what each score level means
 3. Select a score from **1** (ad-hoc, no formal process) to **5** (optimized, continuously improving)
 4. Optionally add a note explaining your score
-5. Move to the next subcategory
+5. Move to the next item
 
-You don't have to score everything in one session — PUPIL saves automatically as you go.
+You don't have to score everything in one session — click **Save Draft** any time, and **Publish** when the assessment is ready to count toward your dashboard and reports.
 
-### Setting targets
-
-After scoring your current state, click **Set Targets** to define where you want to be. This creates the gap analysis view showing which categories need the most work.
+> For CIS safeguards, the tooltip shows the general maturity scale rather than a control-specific description — CIS defines safeguards as implemented or not, not a five-stage maturity ladder the way NIST does. Treat the score as "how fully and consistently is this safeguard implemented."
 
 ---
 
-## 5. Understanding maturity scores
+## 5. Setting targets
 
-PUPIL uses the CMMI (Capability Maturity Model Integration) 1–5 scale:
+### NIST CSF 2.0
+
+Go to **Targets** in the navigation and set a desired score for each subcategory individually, or use **Quick set all** to apply one score across an entire function. This feeds the NIST Gap Analysis and Roadmap views.
+
+### CIS Controls v8.1
+
+Go to **CIS Controls** in the navigation. Instead of setting each safeguard by hand, pick your **Target Implementation Group** — IG1, IG2, or IG3 — and PUPIL automatically sets a target for every safeguard at or below that group. Implementation Groups are cumulative: IG2 includes everything in IG1, and IG3 includes everything in IG1 and IG2.
+
+You can still fine-tune any individual safeguard afterward — its target selector on the same page overrides whatever the Implementation Group set, without needing to re-run the bulk selection.
+
+---
+
+## 6. Understanding maturity scores
+
+PUPIL uses the CMMI (Capability Maturity Model Integration) 1–5 scale for both frameworks:
 
 | Score | Level | What it means |
 |---|---|---|
@@ -166,24 +184,36 @@ PUPIL uses the CMMI (Capability Maturity Model Integration) 1–5 scale:
 
 Most organizations doing a first assessment land between 1 and 3. A score of 3 across the board is a solid, defensible security posture for most mid-size companies.
 
-**The hover tooltips (the ? icons) are your best friend** — PUPIL includes 530 control-specific descriptors that tell you exactly what a 2 versus a 3 looks like for *that specific subcategory*, not just a generic definition.
+**For NIST, the hover tooltips (the ? icons) are your best friend** — PUPIL includes 530 control-specific descriptors that tell you exactly what a 2 versus a 3 looks like for *that specific subcategory*, not just a generic definition. CIS safeguards don't have this per-level ladder (CIS itself doesn't define one), so target scores for CIS default to **3 (Defined)** — meaning "implemented as documented policy" — when an Implementation Group is selected.
 
 ---
 
-## 6. Exporting and sharing results
+## 7. The Strategic Roadmap
+
+Go to **Roadmap** in the navigation for an executive-level view that turns your scores into a prioritized plan, generated automatically — no manual write-up required. It has three tabs:
+
+- **NIST CSF 2.0** — a radar chart comparing current vs. target maturity across the six functions, plus your gaps grouped into **Urgent**, **High Priority**, and **Planned** by how far each subcategory is from its target. Each item includes a specific recommendation pulled from PUPIL's control-specific descriptors — what it actually takes to reach the next level.
+- **CIS Controls v8.1** — the same idea without the radar (CIS is a checklist, not a maturity ladder): every in-scope safeguard below target, with the safeguard's own official CIS description of what "implemented" looks like.
+- **Combined** — one radar and one priority list blending both frameworks by security function (Govern, Identify, Protect, Detect, Respond, Recover), so you can see your overall posture regardless of which framework you used to assess a given area.
+
+Wherever CIS's own official crosswalk connects a NIST subcategory to a CIS safeguard, you'll see a **Related** note pointing to the corresponding item in the other framework — so a gap doesn't show up as two unrelated line items when it's really one piece of work.
+
+---
+
+## 8. Exporting and sharing results
 
 **Print or save as PDF:**
-Click **Print Report** from any assessment view. This generates a clean, formatted report suitable for board presentations or audit documentation.
+Open any assessment's report and click **Print / Save PDF**. This generates a clean, formatted report suitable for board presentations or audit documentation — for either framework.
 
 **Export to CSV:**
-Click **Export CSV** to download all scores as a spreadsheet. Useful for importing into other tools or creating your own charts.
+Click **Export CSV** on the report page to download all scores as a spreadsheet. Useful for importing into other tools or creating your own charts.
 
 **Shareable URL:**
-Each assessment has a unique URL you can share with anyone who has access to the same running instance.
+Click **Copy Link** on the report page to copy a URL you can share with anyone who has access to the same running instance.
 
 ---
 
-## 7. Troubleshooting
+## 9. Troubleshooting
 
 ### "This site can't be reached" at localhost:3001
 
@@ -210,11 +240,15 @@ Another application is using port 3001. Either stop the other application or cha
 
 ### Scores aren't saving
 
-PUPIL saves automatically — you should see a brief "Saved" indicator after each change. If you're not seeing that, check that the container is running and try refreshing the page.
+PUPIL saves when you click **Save Draft** or **Publish** — if changes aren't appearing after a refresh, confirm the container is running and that you clicked one of those buttons before navigating away.
+
+### Selecting an Implementation Group on the CIS page didn't seem to do anything
+
+Give it a moment — selecting an IG triggers a bulk update across up to 153 safeguards. Check the **In Scope** count at the top of the CIS Controls page; it should match the count shown next to the IG you selected. If it hasn't changed, refresh the page.
 
 ---
 
-## 8. For developers
+## 10. For developers
 
 ### Tech stack
 - **Next.js 16** (App Router, React 19)
@@ -232,10 +266,19 @@ PUPIL saves automatically — you should see a brief "Saved" indicator after eac
 ### Project structure
 ```
 src/app/          — Next.js App Router pages and API routes
+  cis/            — CIS Controls v8.1 browse, IG selection, and gap view
+  roadmap/        — Strategic Roadmap (NIST / CIS / Combined tabs)
 src/components/   — React components
-src/lib/          — Database access and scoring logic
+src/lib/
+  descriptors.ts  — NIST CSF 2.0 control-specific maturity descriptors
+  cis-data.ts     — CIS Controls v8.1 dataset (Controls, Safeguards, NIST crosswalk), sourced from official CIS spreadsheets
+  roadmap.ts      — Roadmap data: gap calculation, prioritization, and recommendation generation for both frameworks
 data/             — SQLite database (created on first run)
 ```
+
+### Multi-framework data model
+
+Both frameworks live in the same `controls` table, distinguished by `framework_id`. NIST CSF 2.0 is a strict three-level tree (Function → Category → Subcategory). CIS Controls v8.1 is a two-level tree (Control → Safeguard) — CIS Controls don't nest under a single security function the way NIST categories do, so each Safeguard instead carries a `function_code` tag (its officially mapped NIST function) used for cross-framework rollups without forcing CIS into NIST's shape.
 
 ### Running linting
 ```bash

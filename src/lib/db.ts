@@ -100,7 +100,31 @@ export function getDb(): Database.Database {
       ip_address TEXT,
       details TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS cis_nist_crosswalk (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      safeguard_code TEXT NOT NULL,
+      csf_subcategory_code TEXT NOT NULL,
+      relationship TEXT NOT NULL CHECK(relationship IN ('Equivalent', 'Subset', 'Superset')),
+      UNIQUE(safeguard_code, csf_subcategory_code)
+    );
+
+    CREATE TABLE IF NOT EXISTS cis_settings (
+      id INTEGER PRIMARY KEY CHECK(id = 1),
+      selected_ig INTEGER CHECK(selected_ig IN (1, 2, 3)),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
+
+  // CREATE TABLE IF NOT EXISTS doesn't retroactively add columns to an
+  // existing controls table, so new columns need an explicit migration.
+  const controlColumns = (db.prepare('PRAGMA table_info(controls)').all() as { name: string }[]).map((c) => c.name);
+  if (!controlColumns.includes('function_code')) {
+    db.exec('ALTER TABLE controls ADD COLUMN function_code TEXT');
+  }
+  if (!controlColumns.includes('min_ig')) {
+    db.exec('ALTER TABLE controls ADD COLUMN min_ig INTEGER CHECK(min_ig IN (1, 2, 3))');
+  }
 
   return db;
 }

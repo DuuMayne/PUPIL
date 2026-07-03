@@ -1,4 +1,6 @@
+import Database from 'better-sqlite3';
 import { getDb } from './db';
+import { CIS_CONTROLS, CIS_SAFEGUARDS, CIS_NIST_CROSSWALK } from './cis-data';
 
 let seeded = false;
 
@@ -7,7 +9,12 @@ export function seedDatabase(): void {
   seeded = true;
 
   const db = getDb();
+  seedNistControls(db);
+  seedCisControls(db);
+  backfillNistFunctionCodes(db);
+}
 
+function seedNistControls(db: Database.Database): void {
   const existing = db.prepare('SELECT id FROM frameworks WHERE name = ? AND version = ?').get('NIST CSF', '2.0');
   if (existing) return;
 
@@ -330,4 +337,54 @@ export function seedDatabase(): void {
       'Public updates on the incident and ongoing recovery activities are shared.', 2);
 
   })();
+}
+
+function seedCisControls(db: Database.Database): void {
+  const existing = db.prepare('SELECT id FROM frameworks WHERE name = ? AND version = ?').get('CIS Controls', '8.1.2');
+  if (existing) return;
+
+  db.transaction(() => {
+    const fw = db.prepare(
+      `INSERT INTO frameworks (name, version, description) VALUES (?, ?, ?)`
+    ).run(
+      'CIS Controls',
+      '8.1.2',
+      'CIS Critical Security Controls v8.1.2 — a prioritized set of safeguards to mitigate the most prevalent cyberattacks, tagged by Implementation Group (IG1-IG3) and mapped to NIST CSF 2.0 functions.'
+    );
+    const fwId = fw.lastInsertRowid as number;
+
+    const insertControl = db.prepare(
+      `INSERT INTO controls (id, framework_id, parent_id, level, code, title, description, sort_order, function_code, min_ig)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+
+    for (const c of CIS_CONTROLS) {
+      insertControl.run(`CIS-${c.num}`, fwId, null, 'category', String(c.num), c.title, c.description, c.num, null, null);
+    }
+
+    const safeguardIndexInControl = new Map<number, number>();
+    for (const s of CIS_SAFEGUARDS) {
+      const nextIndex = (safeguardIndexInControl.get(s.control) ?? 0) + 1;
+      safeguardIndexInControl.set(s.control, nextIndex);
+      insertControl.run(`CIS-${s.code}`, fwId, `CIS-${s.control}`, 'subcategory', s.code, s.title, s.description, nextIndex, s.functionCode, s.minIg);
+    }
+
+    const insertCrosswalk = db.prepare(
+      `INSERT OR IGNORE INTO cis_nist_crosswalk (safeguard_code, csf_subcategory_code, relationship) VALUES (?, ?, ?)`
+    );
+    for (const x of CIS_NIST_CROSSWALK) {
+      insertCrosswalk.run(x.safeguardCode, x.csfSubcategoryCode, x.relationship);
+    }
+  })();
+}
+
+function backfillNistFunctionCodes(db: Database.Database): void {
+  db.exec(`
+    UPDATE controls
+    SET function_code = (
+      SELECT fn.code FROM controls fn
+      WHERE fn.id = (SELECT cat.parent_id FROM controls cat WHERE cat.id = controls.parent_id)
+    )
+    WHERE framework_id = 1 AND level = 'subcategory' AND function_code IS NULL
+  `);
 }

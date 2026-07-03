@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const rows = db.prepare(
       `SELECT a.*,
          (SELECT COUNT(*) FROM assessment_scores WHERE assessment_id = a.id AND score IS NOT NULL) as scored_count,
-         (SELECT COUNT(*) FROM controls WHERE level = 'subcategory') as total_controls
+         (SELECT COUNT(*) FROM controls WHERE level = 'subcategory' AND framework_id = a.framework_id) as total_controls
        FROM assessments a ORDER BY created_at DESC`
     ).all();
     return NextResponse.json(rows);

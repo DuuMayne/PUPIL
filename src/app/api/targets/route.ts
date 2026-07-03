@@ -43,6 +43,24 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+// Remove a target entirely (target_score is NOT NULL, so "no target" can
+// only be represented by the row's absence, not by an update).
+export async function DELETE(req: NextRequest) {
+  seedDatabase();
+  const db = getDb();
+  const ip = getClientIp(req);
+
+  try {
+    const { framework_id, control_id } = await req.json() as { framework_id: number; control_id: string };
+    db.prepare('DELETE FROM targets WHERE framework_id = ? AND control_id = ?').run(framework_id, control_id);
+    logger.audit('target.delete', { framework_id, control_id, ip });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    logger.error('target.delete.failed', { error: String(err), ip });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // Batch upsert targets
 export async function POST(req: NextRequest) {
   seedDatabase();

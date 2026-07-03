@@ -10,6 +10,7 @@ export default function NewAssessmentPage() {
     description: '',
     assessor: '',
     assessed_at: new Date().toISOString().slice(0, 10),
+    framework_id: 1,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +24,7 @@ export default function NewAssessmentPage() {
       const res = await fetch('/api/assessments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          framework_id: 1,
-        }),
+        body: JSON.stringify(form),
       });
 
       if (!res.ok) throw new Error('Failed to create assessment');
@@ -46,6 +44,29 @@ export default function NewAssessmentPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Framework</label>
+          <div className="flex gap-3">
+            {[
+              { id: 1, label: 'NIST CSF 2.0' },
+              { id: 2, label: 'CIS Controls v8.1' },
+            ].map((fw) => (
+              <button
+                key={fw.id}
+                type="button"
+                onClick={() => setForm({ ...form, framework_id: fw.id })}
+                className={`flex-1 rounded border px-3 py-2 text-sm font-medium transition-colors ${
+                  form.framework_id === fw.id
+                    ? 'border-slate-900 bg-slate-900 text-white'
+                    : 'border-slate-200 text-slate-600 hover:border-slate-400'
+                }`}
+              >
+                {fw.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Title <span className="text-red-500">*</span></label>
           <input

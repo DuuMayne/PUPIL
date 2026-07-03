@@ -8,7 +8,9 @@ const NAV_LINKS = [
   { href: '/assessments', label: 'Assessments' },
   { href: '/targets', label: 'Targets' },
   { href: '/gap', label: 'Gap Analysis' },
+  { href: '/roadmap', label: 'Roadmap' },
   { href: '/trends', label: 'Trends' },
+  { href: '/cis', label: 'CIS Controls' },
 ];
 
 export default function Navbar() {
@@ -43,7 +45,7 @@ export default function Navbar() {
             })}
           </div>
         </div>
-        <span className="text-slate-500 text-xs">NIST CSF 2.0</span>
+        <span className="text-slate-500 text-xs">NIST CSF 2.0 · CIS Controls v8.1</span>
       </div>
     </nav>
   );

@@ -53,7 +53,27 @@ export interface Control {
   title: string;
   description: string | null;
   sort_order: number;
+  function_code: string | null;
+  min_ig: 1 | 2 | 3 | null;
 }
+
+export const FUNCTION_LABELS: Record<string, string> = {
+  GV: 'Govern',
+  ID: 'Identify',
+  PR: 'Protect',
+  DE: 'Detect',
+  RS: 'Respond',
+  RC: 'Recover',
+};
+
+export const FUNCTION_COLORS: Record<string, string> = {
+  GV: '#6366f1',
+  ID: '#f59e0b',
+  PR: '#3b82f6',
+  DE: '#ec4899',
+  RS: '#ef4444',
+  RC: '#10b981',
+};
 
 export interface Assessment {
   id: string;

@@ -24,11 +24,11 @@ export default function TrendsPage() {
   const db = getDb();
 
   const published = db.prepare(
-    `SELECT * FROM assessments WHERE status = 'published' ORDER BY assessed_at ASC, created_at ASC`
+    `SELECT * FROM assessments WHERE status = 'published' AND framework_id = 1 ORDER BY assessed_at ASC, created_at ASC`
   ).all() as { id: string; title: string; assessed_at: string | null }[];
 
   const functions = db.prepare(
-    `SELECT * FROM controls WHERE level = 'function' ORDER BY sort_order`
+    `SELECT * FROM controls WHERE level = 'function' AND framework_id = 1 ORDER BY sort_order`
   ).all() as { id: string; code: string; title: string }[];
 
   const dataPoints: DataPoint[] = published.map((asm) => {

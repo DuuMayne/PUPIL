@@ -47,11 +47,11 @@ export default function GapPage() {
   const db = getDb();
 
   const latestAssessment = db.prepare(
-    `SELECT * FROM assessments WHERE status = 'published' ORDER BY assessed_at DESC, created_at DESC LIMIT 1`
+    `SELECT * FROM assessments WHERE status = 'published' AND framework_id = 1 ORDER BY assessed_at DESC, created_at DESC LIMIT 1`
   ).get() as { id: string; title: string; assessed_at: string | null } | undefined;
 
   const functions = db.prepare(
-    `SELECT * FROM controls WHERE level = 'function' ORDER BY sort_order`
+    `SELECT * FROM controls WHERE level = 'function' AND framework_id = 1 ORDER BY sort_order`
   ).all() as { id: string; code: string; title: string }[];
 
   const targets = db.prepare('SELECT * FROM targets WHERE framework_id = 1').all() as {

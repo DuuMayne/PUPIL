@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const db = getDb();
 
   const latestAssessment = db.prepare(
-    `SELECT * FROM assessments WHERE status = 'published' ORDER BY assessed_at DESC, created_at DESC LIMIT 1`
+    `SELECT * FROM assessments WHERE status = 'published' AND framework_id = 1 ORDER BY assessed_at DESC, created_at DESC LIMIT 1`
   ).get() as { id: string; title: string; assessed_at: string | null; assessor: string | null } | undefined;
 
   const allAssessments = db.prepare(
@@ -40,8 +40,25 @@ export default function DashboardPage() {
   ).get() as { c: number };
 
   const functions = db.prepare(
-    `SELECT * FROM controls WHERE level = 'function' ORDER BY sort_order`
+    `SELECT * FROM controls WHERE level = 'function' AND framework_id = 1 ORDER BY sort_order`
   ).all() as { id: string; code: string; title: string }[];
+
+  const cisFramework = db.prepare(`SELECT id FROM frameworks WHERE name = 'CIS Controls'`).get() as { id: number } | undefined;
+  const cisSafeguardCount = cisFramework
+    ? (db.prepare(`SELECT COUNT(*) c FROM controls WHERE framework_id = ? AND level = 'subcategory'`).get(cisFramework.id) as { c: number }).c
+    : 0;
+  const cisTargetsMetCount = cisFramework
+    ? (db.prepare(
+        `SELECT COUNT(*) c FROM targets t
+         JOIN controls c ON c.id = t.control_id
+         LEFT JOIN assessment_scores s ON s.control_id = t.control_id
+           AND s.assessment_id = (SELECT id FROM assessments WHERE framework_id = ? AND status = 'published' ORDER BY assessed_at DESC, created_at DESC LIMIT 1)
+         WHERE t.framework_id = ? AND s.score IS NOT NULL AND s.score >= t.target_score`
+      ).get(cisFramework.id, cisFramework.id) as { c: number }).c
+    : 0;
+  const cisInScopeCount = cisFramework
+    ? (db.prepare(`SELECT COUNT(*) c FROM targets WHERE framework_id = ?`).get(cisFramework.id) as { c: number }).c
+    : 0;
 
   const functionSummaries: FunctionSummary[] = functions.map((fn) => {
     const subcategories = db.prepare(
@@ -175,7 +192,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Link href="/assessments" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-slate-400 transition-colors group">
           <p className="font-semibold text-slate-800 group-hover:text-slate-900">Assessments</p>
           <p className="text-sm text-slate-500 mt-1">Create, score, and publish assessments</p>
@@ -187,6 +204,14 @@ export default function DashboardPage() {
         <Link href="/trends" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-slate-400 transition-colors group">
           <p className="font-semibold text-slate-800 group-hover:text-slate-900">Trends</p>
           <p className="text-sm text-slate-500 mt-1">Maturity improvement over time</p>
+        </Link>
+        <Link href="/cis" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-slate-400 transition-colors group">
+          <p className="font-semibold text-slate-800 group-hover:text-slate-900">CIS Controls v8.1</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {cisInScopeCount > 0
+              ? `${cisTargetsMetCount}/${cisInScopeCount} in-scope safeguards at target`
+              : `${cisSafeguardCount} safeguards · pick an Implementation Group`}
+          </p>
         </Link>
       </div>
     </div>
