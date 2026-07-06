@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1.7
 
 # ---------- base ----------
-FROM node:20-alpine AS base
+# Node 22 (current LTS) — also satisfies lint-staged's own >=22.22.1 floor,
+# which otherwise prints an EBADENGINE warning during npm ci.
+FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 
 # ---------- deps ----------
@@ -11,6 +13,9 @@ FROM base AS deps
 WORKDIR /app
 RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json ./
+# Skip husky's `prepare` script — git hooks are meaningless inside a
+# throwaway build container and there's no .git checkout to hook into here.
+ENV HUSKY=0
 RUN npm ci
 
 # ---------- builder ----------
@@ -34,8 +39,9 @@ RUN addgroup --system --gid 1001 nodejs \
 # Default DB location — override DB_PATH at runtime to point at a mounted volume.
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-# Standalone Next output bundles only what's needed to run.
-COPY --from=builder /app/public ./public
+# Standalone Next output bundles only what's needed to run. No `public/`
+# copy here — this app has no static assets (removed when the repo was
+# cleaned up for public presentation); add one back if that ever changes.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
